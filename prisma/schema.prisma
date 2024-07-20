@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model account {
+  id                       String   @id @default(cuid())
+  userId                   String   @unique(map: "Account_userId_key")
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String?  @db.Text
+  access_token             String?  @db.Text
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?  @db.Text
+  session_state            String?
+  refresh_token_expires_in Int?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  user                     user     @relation(fields: [userId], references: [id], map: "Account_userId_fkey")
+
+  @@unique([provider, providerAccountId], map: "Account_provider_providerAccountId_key")
+  @@index([userId], map: "Account_userId_idx")
+}
+
+model authenticator {
+  credentialID         String  @unique(map: "Authenticator_credentialID_key")
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+  user                 user    @relation(fields: [userId], references: [id], onDelete: Cascade, map: "Authenticator_userId_fkey")
+
+  @@id([userId, credentialID])
+}
+
+// model comment {
+//   id        String   @id @default(cuid())
+//   content   String
+//   authorId  String
+//   postId    String
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+//   user      user     @relation(fields: [authorId], references: [id], map: "Comment_authorId_fkey")
+//   post      post     @relation(fields: [postId], references: [id], map: "Comment_postId_fkey")
+
+//   @@index([authorId], map: "Comment_authorId_fkey")
+//   @@index([postId], map: "Comment_postId_fkey")
+// }
+
+model comment {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String
+  postId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      user     @relation(fields: [authorId], references: [id], map: "Comment_authorId_fkey")
+  post      post     @relation(fields: [postId], references: [id], onDelete: Cascade, map: "Comment_postId_fkey")
+
+  @@index([authorId], map: "Comment_authorId_fkey")
+  @@index([postId], map: "Comment_postId_fkey")
+}
+
+model post {
+  id        String    @id @default(cuid())
+  content   String
+  authorId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  image     String?
+  comment   comment[]
+  like      like[]
+  user      user      @relation(fields: [authorId], references: [id], map: "Post_authorId_fkey")
+
+  @@index([authorId], map: "Post_authorId_fkey")
+}
+
+// model post {
+//   id        String    @id @default(cuid())
+//   content   String
+//   authorId  String
+//   createdAt DateTime  @default(now())
+//   updatedAt DateTime  @updatedAt
+//   image     String?
+//   comment   comment[] @relation(onDelete: Cascade)
+//   like      like[]
+//   user      user      @relation(fields: [authorId], references: [id], map: "Post_authorId_fkey")
+//   @@index([authorId], map: "Post_authorId_fkey")
+// }
+
+model session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique(map: "Session_sessionToken_key")
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+  user         user     @relation(fields: [userId], references: [id], map: "Session_userId_fkey")
+
+  @@index([userId], map: "Session_userId_idx")
+}
+
+model user {
+  id            String          @id @default(cuid())
+  name          String?
+  username      String?         @unique(map: "User_username_key")
+  email         String?         @unique(map: "User_email_key")
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  address       String?
+  password      String?
+  phone         String?
+  role          user_role       @default(USER)
+  account       account?
+  authenticator authenticator[]
+  comment       comment[]
+  like          like[]
+  post          post[]
+  session       session[]
+}
+
+model verificationtoken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token], map: "VerificationToken_identifier_token_key")
+}
+
+model like {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  post      post     @relation(fields: [postId], references: [id], map: "Like_postId_fkey")
+  user      user     @relation(fields: [userId], references: [id], map: "Like_userId_fkey")
+
+  @@index([postId], map: "Like_postId_fkey")
+  @@index([userId], map: "Like_userId_fkey")
+}
+
+enum user_role {
+  USER
+  ADMIN
+}
