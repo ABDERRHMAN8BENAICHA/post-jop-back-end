@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import prisma from "../../lib/db"
+import prisma from "../lib/db"
 
 interface Post {
     content: string,

@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import prisma from "../../lib/db";
+import prisma from "../lib/db";
 
 
 // http://localhost:8080/api/comments?id=123456789 #id : idPost
